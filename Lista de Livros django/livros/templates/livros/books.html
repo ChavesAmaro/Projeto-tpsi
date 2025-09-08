@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-toggle {
+            background-color: #247fe0ff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-delete {
+            background-color: #db2d41ff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-edit {
+            background-color: #1c973bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-sort {
+        background-color: #464646ff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 5px;
+        font-size: 0.9em;
+        }
+        .btn-sort.active {
+        background-color: #247fe0ff;
+        color: white;
+        }
+        
+        .btn-sort:hover {
+        background-color: #252525ff;
+        }
+
+        .book-read {
+            color: green;
+        }
+        .book-unread {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Livros</h1>
+
+    <form action="{% url 'book_list' %}" method="post">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Título" required>
+        <input type="text" name="author" placeholder="Autor" required>
+        <input type="number" name="ano_publicacao" placeholder="Ano de Publicação" required>
+        <input type="number" name="paginas" placeholder="Número de Páginas" required>
+        <input type="text" name="tema_principal" placeholder="Tema Principal" required>
+        <input type="number" step="0.01" name="preco" placeholder="Preço">
+        <input type="text" name="edicao" placeholder="Edição">
+        <select name="avaliacao_pessoal" id="avaliacao_pessoal">
+            <option value="">Avaliação</option>
+            {% for i in "12345" %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+        <label for="date_start">Data de Início de Leitura:</label>
+        <input type="date" name="date_start" placeholder="Início da leitura">
+        <button type="submit">Adicionar</button>
+    </form>
+    <h2>Pesquisar / Filtrar</h2>
+    <form method="get" style="margin-bottom: 20px;">
+        <input type="text" name="search" placeholder="Pesquisar por título" value="{{ search }}">
+        
+        <select name="filter_read">
+            <option value="" {% if filter_read == "" %}selected{% endif %}>Todos</option>
+            <option value="read" {% if filter_read == "read" %}selected{% endif %}>Lidos</option>
+            <option value="unread" {% if filter_read == "unread" %}selected{% endif %}>Não Lidos</option>
+        </select>
+
+        <input type="hidden" name="sort" value="{{ current_sort }}">
+        <input type="hidden" name="direction" value="{{ current_direction }}">
+
+        <button type="submit">Filtrar</button>
+    </form>
+    <div class="sort-links" style="margin-bottom: 20px;">
+        <a href="?sort=title&direction=asc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
+            class="btn-sort {% if current_sort == 'title' and current_direction == 'asc' %}active{% endif %}">
+            Título ↑
+        </a>
+        <a href="?sort=title&direction=desc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
+            class="btn-sort {% if current_sort == 'title' and current_direction == 'desc' %}active{% endif %}">
+            Título ↓
+        </a>
+
+        <a href="?sort=date_start&direction=asc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
+            class="btn-sort {% if current_sort == 'date_start' and current_direction == 'asc' %}active{% endif %}">
+            Início Leitura ↑
+        </a>
+        <a href="?sort=date_start&direction=desc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
+            class="btn-sort {% if current_sort == 'date_start' and current_direction == 'desc' %}active{% endif %}">
+            Início Leitura ↓
+        </a>
+        <a href="/" class="btn-sort" style="background-color:#db2d41ff;">Limpar Sort</a>
+</div>
+    <ul>
+        {% for book in books %}
+            <li class="{% if book.read %}book-read{% else %}book-unread{% endif %}">
+                {{ book.title }} ({{ book.author }})  -  Registado a: {{ book.date_reg|date:"d/m/Y" }}
+                - Ano: {{ book.ano_publicacao }}  
+                - Páginas: {{ book.paginas }}  
+                - Tema: {{ book.tema_principal }}
+
+                {% if book.preco %} - Preço: {{ book.preco }} € {% endif %}
+                {% if book.edicao %} - Edição: {{ book.edicao }} {% endif %}
+                {% if book.avaliacao_pessoal %}
+                    - Avaliação: {{ book.avaliacao_pessoal }}/5
+                {% endif %}
+                {%if book.date_read %} - Lido a: {{ book.date_read|date:"d/m/Y"}}
+                {% endif%}
+
+                {% if book.date_start %} - Leitura iniciada a: {{ book.date_start|date:"d/m/Y" }}
+                {% endif %}
+
+                <form action="{% url 'toggle_book' book.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    {% if book.read %}
+                        <button type="submit" class="btn-toggle">Marcar como Não Lido</button>
+                    {% else %}
+                        <button type="submit" class="btn-toggle">Marcar como Lido</button>
+                    {% endif %}
+                </form>
+
+                <a href="{% url 'edit_book' book.id %}" class="btn-edit">Editar</a>
+
+                <form action="{% url 'delete_book' book.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Pretende eliminar este livro?')" class="btn-delete">Eliminar</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>Nenhum livro adicionado ainda.</li>
+        {% endfor %}
+    </ul>
+    
+</body>
+</html>

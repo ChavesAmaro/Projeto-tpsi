@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    .btn-back {
+        background-color: #464646ff;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+    }
+
+    </style>
+
+    <title>Editar Livro</title>
+</head>
+<body>
+   <h1>Editar Livro</h1>
+
+    <form action="{% url 'edit_book' book.id %}" method="post">
+        {% csrf_token %}
+        <input type="text" name="title" value="{{ book.title }}" required>
+        <input type="text" name="author" value="{{ book.author }}" required>
+        <input type="number" name="ano_publicacao" value="{{ book.ano_publicacao }}" placeholder="Ano de Publicação" required>
+        <input type="number" name="paginas" value="{{ book.paginas }}" placeholder="Número de Páginas" required>
+        <input type="text" name="tema_principal" value="{{ book.tema_principal }}" placeholder="Tema Principal" required>
+        <input type="number" step="0.01" name="preco" value="{{ book.preco }}" placeholder="Preço">
+        <input type="text" name="edicao" value="{{ book.edicao }}" placeholder="Edição">
+        <label for="avaliacao_pessoal">Avaliação:</label>
+        <select name="avaliacao_pessoal" id="avaliacao_pessoal">
+            <option value="">-- Selecionar --</option>
+            {% for i in "12345" %}
+                <option value="{{ i }}" {% if book.avaliacao_pessoal|stringformat:"s" == i %}selected{% endif %}>{{ i }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="date" name="date_start" value="{{ book.date_start|date:'Y-m-d' }}">
+
+        <button type="submit">Guardar Alterações</button>
+    </form>
+
+    <a href="{% url 'book_list' %}" class="btn-back">Voltar à Lista</a> 
+</body>
+</html>
