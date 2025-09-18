@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+
         button {
             padding: 5px 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+
         .btn-toggle {
             background-color: #247fe0ff;
             color: white;
@@ -18,6 +20,7 @@
             text-decoration: none;
             display: inline-block;
         }
+
         .btn-delete {
             background-color: #db2d41ff;
             color: white;
@@ -26,6 +29,7 @@
             text-decoration: none;
             display: inline-block;
         }
+
         .btn-edit {
             background-color: #1c973bff;
             color: white;
@@ -45,6 +49,18 @@
         margin-right: 5px;
         font-size: 0.9em;
         }
+
+        .btn-stats {
+        background-color: #6f5b79ff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 5px;
+        font-size: 0.9em;
+        }
+
         .btn-sort.active {
         background-color: #247fe0ff;
         color: white;
@@ -57,13 +73,58 @@
         .book-read {
             color: green;
         }
+
         .book-unread {
             color: red;
         }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: 200px 150px 80px 80px 120px 80px 80px 60px 120px 120px 120px 200px;
+            gap: 10px;
+            align-items: center;
+            padding: 4px 8px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .book-item {
+            display: flex;
+            justify-content: space-between;
+            grid-template-columns: 200px 150px 80px 80px 120px 80px 80px 60px 120px 120px 120px 200px;
+            align-items: center;
+        }
+
+        .book-actions form, .book-actions a {
+            margin-left: 5px;
+        }
+
+        .book-grid.header {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            padding: 6px 8px;
+            border-bottom: 2px solid #ccc;
+            display: grid;
+            grid-template-columns: 30px 200px 150px 80px 80px 120px 80px 60px 78px 120px 120px 359px 200px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .book-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+            align-items: center;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
     </style>
 </head>
 <body>
-    <h1>Lista de Livros</h1>
+    <h1>Registo de Livros</h1>
 
     <form action="{% url 'book_list' %}" method="post">
         {% csrf_token %}
@@ -80,7 +141,7 @@
                 <option value="{{ i }}">{{ i }}</option>
             {% endfor %}
         </select>
-        <label for="date_start">Data de Início de Leitura:</label>
+        <label for="date_start">Data do Início da Leitura:</label>
         <input type="date" name="date_start" placeholder="Início da leitura">
         <button type="submit">Adicionar</button>
     </form>
@@ -118,46 +179,60 @@
             Início Leitura ↓
         </a>
         <a href="/" class="btn-sort" style="background-color:#db2d41ff;">Limpar Sort</a>
+        <a href="{% url 'stats' %}" class="btn-stats">Estatísticas</a>
+
+
 </div>
-    <ul>
-        {% for book in books %}
-            <li class="{% if book.read %}book-read{% else %}book-unread{% endif %}">
-                {{ book.title }} ({{ book.author }})  -  Registado a: {{ book.date_reg|date:"d/m/Y" }}
-                - Ano: {{ book.ano_publicacao }}  
-                - Páginas: {{ book.paginas }}  
-                - Tema: {{ book.tema_principal }}
 
-                {% if book.preco %} - Preço: {{ book.preco }} € {% endif %}
-                {% if book.edicao %} - Edição: {{ book.edicao }} {% endif %}
-                {% if book.avaliacao_pessoal %}
-                    - Avaliação: {{ book.avaliacao_pessoal }}/5
-                {% endif %}
-                {%if book.date_read %} - Lido a: {{ book.date_read|date:"d/m/Y"}}
-                {% endif%}
+    <h2 style="margin-top: 20px; margin-bottom: 10px;">Lista de Livros</h2>
 
-                {% if book.date_start %} - Leitura iniciada a: {{ book.date_start|date:"d/m/Y" }}
-                {% endif %}
-
-                <form action="{% url 'toggle_book' book.id %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    {% if book.read %}
-                        <button type="submit" class="btn-toggle">Marcar como Não Lido</button>
-                    {% else %}
-                        <button type="submit" class="btn-toggle">Marcar como Lido</button>
-                    {% endif %}
-                </form>
-
-                <a href="{% url 'edit_book' book.id %}" class="btn-edit">Editar</a>
-
-                <form action="{% url 'delete_book' book.id %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" onclick="return confirm('Pretende eliminar este livro?')" class="btn-delete">Eliminar</button>
-                </form>
+    <div class="book-grid header">
+        <span></span>
+        <span>Título</span>
+        <span>Autor</span>
+        <span>Ano</span>
+        <span>Páginas</span>
+        <span>Tema</span>
+        <span>Preço</span>
+        <span>Edição</span>
+        <span>Avaliação</span>
+        <span>Registado a</span>
+        <span>Início Leitura</span>
+        <span>Lido a</span>
+        <span>Ações</span> 
+    </div>
+        <ul>
+            {% for book in books %}
+            <li class="book-item {% if book.read %}book-read{% else %}book-unread{% endif %}">
+                <div class="book-grid">
+                    <span class="book-title">{{ book.title }}</span>
+                    <span class="book-author">{{ book.author }}</span>
+                    <span class="book-year">{{ book.ano_publicacao }}</span>
+                    <span class="book-pages">{{ book.paginas }}</span>
+                    <span class="book-theme">{{ book.tema_principal }}</span>
+                    <span class="book-preco">{% if book.preco %}{{ book.preco }}€{% endif %}</span>
+                    <span class="book-edicao">{% if book.edicao %}{{ book.edicao }}{% endif %}</span>
+                    <span class="book-avaliacao">{% if book.avaliacao_pessoal %}{{ book.avaliacao_pessoal }}/5{% endif %}</span>
+                    <span class="book-registered">{{ book.date_reg|date:"d/m/Y" }}</span>
+                    <span class="book-start">{% if book.date_start %}{{ book.date_start|date:"d/m/Y" }}{% endif %}</span>
+                    <span class="book-read-date">{% if book.date_read %}{{ book.date_read|date:"d/m/Y" }}{% endif %}</span>
+                </div>
+                <div class="book-actions">
+                    <form action="{% url 'toggle_book' book.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-toggle">{% if book.read %}Marcar como Não Lido{% else %}Marcar como Lido{% endif %}</button>
+                    </form>
+                    <a href="{% url 'edit_book' book.id %}" class="btn-edit">Editar</a>
+                    <form action="{% url 'delete_book' book.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('Pretende eliminar este livro?')" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
             </li>
-        {% empty %}
-            <li>Nenhum livro adicionado ainda.</li>
-        {% endfor %}
-    </ul>
+            {% empty %}
+                <li>Nenhum livro adicionado ainda.</li>
+            {% endfor %}
+        </ul>
     
 </body>
 </html>

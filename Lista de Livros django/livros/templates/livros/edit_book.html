@@ -13,7 +13,17 @@
         display: inline-block;
         margin-top: 20px;
     }
+    h3 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #333;
+    }
 
+    hr {
+        margin: 15px 0;
+        border: none;
+        border-top: 1px solid #ccc;
+    }
     </style>
 
     <title>Editar Livro</title>
@@ -37,12 +47,15 @@
                 <option value="{{ i }}" {% if book.avaliacao_pessoal|stringformat:"s" == i %}selected{% endif %}>{{ i }}</option>
             {% endfor %}
         </select>
-
-        <input type="date" name="date_start" value="{{ book.date_start|date:'Y-m-d' }}">
-
+        <hr>
+        <h3>Datas da Leitura</h3>
+        <label for="date_start">Data do Início da Leitura:</label>
+        <input type="date" name="date_start" value="{% if book.date_start %}{{ book.date_start|date:'Y-m-d' }}{% endif %}">
+        <label for="date_read">Data de Conclusão da Leitura:</label>
+        <input type="date" name="date_read" value="{% if book.date_read %}{{ book.date_read|date:'Y-m-d' }}{% endif %}">
+        <br><br>
         <button type="submit">Guardar Alterações</button>
     </form>
-
     <a href="{% url 'book_list' %}" class="btn-back">Voltar à Lista</a> 
 </body>
 </html>
