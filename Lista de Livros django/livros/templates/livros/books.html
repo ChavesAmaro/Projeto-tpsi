@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSS Block -->
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6fbffff;
+        }
 
         button {
             padding: 5px 10px;
@@ -15,9 +20,11 @@
         .btn-toggle {
             background-color: #247fe0ff;
             color: white;
-            padding: 5px 10px;
+            padding: 6px 14px;
             border-radius: 4px;
             text-decoration: none;
+            white-space: nowrap;
+            line-height: 1.2;
             display: inline-block;
         }
 
@@ -39,35 +46,26 @@
             display: inline-block;
         }
 
-        .btn-sort {
-        background-color: #464646ff;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: inline-block;
-        margin-right: 5px;
-        font-size: 0.9em;
+        .btn-excel {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+            font-size: 0.9em;
         }
 
         .btn-stats {
-        background-color: #6f5b79ff;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: inline-block;
-        margin-right: 5px;
-        font-size: 0.9em;
-        }
-
-        .btn-sort.active {
-        background-color: #247fe0ff;
-        color: white;
-        }
-        
-        .btn-sort:hover {
-        background-color: #252525ff;
+            background-color: #6f5b79ff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+            font-size: 0.9em;
         }
 
         .book-read {
@@ -80,10 +78,10 @@
 
         .book-grid {
             display: grid;
-            grid-template-columns: 200px 150px 80px 80px 120px 80px 80px 60px 120px 120px 120px 200px;
+            grid-template-columns: 300px 200px 80px 80px 120px 80px 80px 60px 120px 120px 120px 0px;
             gap: 10px;
             align-items: center;
-            padding: 4px 8px;
+            padding: 2px 8px;
             border-bottom: 1px solid #ccc;
         }
 
@@ -94,8 +92,11 @@
             align-items: center;
         }
 
-        .book-actions form, .book-actions a {
-            margin-left: 5px;
+        .book-actions button,
+        .book-actions a {
+            padding: 2px 6px;
+            font-size: 0.9em;
+            line-height: 1.2;
         }
 
         .book-grid.header {
@@ -104,26 +105,42 @@
             padding: 6px 8px;
             border-bottom: 2px solid #ccc;
             display: grid;
-            grid-template-columns: 30px 200px 150px 80px 80px 120px 80px 60px 78px 120px 120px 359px 200px;
+            grid-template-columns: 30px 300px 200px 80px 80px 120px 80px 60px 78px 120px 120px 230px 0px;
             gap: 10px;
             align-items: center;
         }
 
         .book-actions {
             display: flex;
+            gap: 6px;
             justify-content: flex-end;
-            gap: 5px;
             align-items: center;
         }
 
         h2 {
+            margin-top: 100px;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        h3 {
             margin-top: 20px;
             margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            text-align: center;
         }
 
     </style>
 </head>
+<!-- HTML Block -->
 <body>
+    <!-- Registo -->
     <h1>Registo de Livros</h1>
 
     <form action="{% url 'book_list' %}" method="post">
@@ -145,9 +162,10 @@
         <input type="date" name="date_start" placeholder="Início da leitura">
         <button type="submit">Adicionar</button>
     </form>
-    <h2>Pesquisar / Filtrar</h2>
+    <!-- Pesquisa -->
+    <h2>Pesquisar</h2>
     <form method="get" style="margin-bottom: 20px;">
-        <input type="text" name="search" placeholder="Pesquisar por título" value="{{ search }}">
+        <input type="text" name="search" placeholder="Pesquisar por título/autor" value="{{ search }}">
         
         <select name="filter_read">
             <option value="" {% if filter_read == "" %}selected{% endif %}>Todos</option>
@@ -160,32 +178,33 @@
 
         <button type="submit">Filtrar</button>
     </form>
-    <div class="sort-links" style="margin-bottom: 20px;">
-        <a href="?sort=title&direction=asc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
-            class="btn-sort {% if current_sort == 'title' and current_direction == 'asc' %}active{% endif %}">
-            Título ↑
-        </a>
-        <a href="?sort=title&direction=desc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
-            class="btn-sort {% if current_sort == 'title' and current_direction == 'desc' %}active{% endif %}">
-            Título ↓
-        </a>
+    <!-- Ordenação -->
+    <h3>Ordenar</h3>
+    <form method="get" class="sort-form">
+        <select name="sort" id="sort">
+            <option value="title" {% if current_sort == "title" %}selected{% endif %}>Título</option>
+            <option value="author" {% if current_sort == "author" %}selected{% endif %}>Autor</option>
+            <option value="ano_publicacao" {% if current_sort == "ano_publicacao" %}selected{% endif %}>Ano</option>
+            <option value="paginas" {% if current_sort == "paginas" %}selected{% endif %}>Páginas</option>
+            <option value="tema_principal" {% if current_sort == "tema_principal" %}selected{% endif %}>Tema</option>
+            <option value="preco" {% if current_sort == "preco" %}selected{% endif %}>Preço</option>
+            <option value="edicao" {% if current_sort == "edicao" %}selected{% endif %}>Edição</option>
+            <option value="avaliacao_pessoal" {% if current_sort == "avaliacao_pessoal" %}selected{% endif %}>Avaliação</option>
+            <option value="date_reg" {% if current_sort == "date_reg" %}selected{% endif %}>Data de registo</option>
+            <option value="date_start" {% if current_sort == "date_start" %}selected{% endif %}>Início da leitura</option>
+            <option value="date_read" {% if current_sort == "date_read" %}selected{% endif %}>Fim da leitura</option>
+        </select>
 
-        <a href="?sort=date_start&direction=asc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
-            class="btn-sort {% if current_sort == 'date_start' and current_direction == 'asc' %}active{% endif %}">
-            Início Leitura ↑
-        </a>
-        <a href="?sort=date_start&direction=desc&search={{ search|urlencode }}&filter_read={{ filter_read }}"
-            class="btn-sort {% if current_sort == 'date_start' and current_direction == 'desc' %}active{% endif %}">
-            Início Leitura ↓
-        </a>
-        <a href="/" class="btn-sort" style="background-color:#db2d41ff;">Limpar Sort</a>
-        <a href="{% url 'stats' %}" class="btn-stats">Estatísticas</a>
+        <select name="direction" id="direction">
+            <option value="asc" {% if current_direction == "asc" %}selected{% endif %}>Ascendente</option>
+            <option value="desc" {% if current_direction == "desc" %}selected{% endif %}>Descendente</option>
+        </select>
 
-
-</div>
-
-    <h2 style="margin-top: 20px; margin-bottom: 10px;">Lista de Livros</h2>
-
+        <button type="submit">Ordenar</button>
+        <a href="/" class="btn-excel" style="background-color:#db2d41ff;">Limpar Sort</a>
+    </form>
+    <!-- Header -->
+    <h4>Lista de Livros Registados</h4>
     <div class="book-grid header">
         <span></span>
         <span>Título</span>
@@ -202,6 +221,7 @@
         <span>Ações</span> 
     </div>
         <ul>
+            <!-- Lista -->
             {% for book in books %}
             <li class="book-item {% if book.read %}book-read{% else %}book-unread{% endif %}">
                 <div class="book-grid">
@@ -217,6 +237,7 @@
                     <span class="book-start">{% if book.date_start %}{{ book.date_start|date:"d/m/Y" }}{% endif %}</span>
                     <span class="book-read-date">{% if book.date_read %}{{ book.date_read|date:"d/m/Y" }}{% endif %}</span>
                 </div>
+                <!-- Acções possíveis com os livros -->
                 <div class="book-actions">
                     <form action="{% url 'toggle_book' book.id %}" method="post" style="display:inline;">
                         {% csrf_token %}
@@ -229,10 +250,19 @@
                     </form>
                 </div>
             </li>
-            {% empty %}
-                <li>Nenhum livro adicionado ainda.</li>
-            {% endfor %}
+        {% empty %}
+            <li>Nenhum livro adicionado ainda.</li>
+        {% endfor %}
         </ul>
-    
+        <!-- Exportar, Estatistica, Logout -->
+        <div style="margin-top: 20px; text-align: right;">
+            <a href="{% url 'stats' %}" class="btn-stats">Estatísticas</a>
+            <a href="{% url 'export_books_excel' %}" class="btn-excel">Exportar para Excel</a>
+        </div>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">Logout</button>
+        </form>
+
 </body>
 </html>

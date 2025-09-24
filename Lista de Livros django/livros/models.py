@@ -20,3 +20,7 @@ class Book(models.Model):
     
     def __str__(self):
         return self.title
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "book_list"
+LOGOUT_REDIRECT_URL = "login"

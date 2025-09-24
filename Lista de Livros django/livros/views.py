@@ -1,20 +1,57 @@
 import re
+import openpyxl
+from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models import Count
 from django.db.models.functions import ExtractYear
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Avg, Sum, F
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.decorators import login_required
 from .models import Book
 from django.utils import timezone
 from datetime import datetime
+from django.urls import path
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
 
+
+class CustomLoginView(LoginView):
+    template_name = "login.html"
+    redirect_authenticated_user = True
+
+class RegisterView(CreateView):
+    template_name = "register.html"
+    form_class = UserCreationForm
+    success_url = reverse_lazy("login")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return response
+
+@login_required(login_url="login")
 def book_list(request):
     sort = request.GET.get("sort", "date_read")
     direction = request.GET.get("direction", "asc")
     search = (request.GET.get("search") or "").strip()
     filter_read = request.GET.get("filter_read", "")
     
-    allowed_sorts = {"title", "date_start", "date_reg", "date_read", "read"}
+    allowed_sorts = {
+        "title", 
+        "author", 
+        "ano_publicacao", 
+        "paginas", 
+        "tema_principal", 
+        "preco", 
+        "edicao", 
+        "avaliacao_pessoal", 
+        "date_start", 
+        "date_reg", 
+        "date_read", 
+        "read"
+    }
+    
     if sort not in allowed_sorts:
         sort = "date_reg"
     
@@ -119,39 +156,26 @@ def edit_book(request, book_id):
 
 def stats_view(request):
     total_livros = Book.objects.count()
-    livros_lidos = Book.objects.filter(read=True, paginas__isnull=False)
+
     lidos = Book.objects.filter(read=True).count()
     nao_lidos = Book.objects.filter(read=False).count()
+
     media_paginas = Book.objects.aggregate(Avg("paginas"))["paginas__avg"] or 0
     media_avaliacao = Book.objects.aggregate(Avg("avaliacao_pessoal"))["avaliacao_pessoal__avg"] or 0
+
     preco_total = Book.objects.aggregate(Sum("preco"))["preco__sum"] or 0
     preco_total = round(preco_total, 2)
 
-    paginas_por_ano = {}
-    for livro in livros_lidos:
-        if livro.date_read:
-            ano = livro.date_read.year
-            paginas_por_ano.setdefault(ano, []).append(livro.paginas)
-            
-    media_total_por_ano = {}
-    total_paginas = 0
 
-    for ano, paginas in paginas_por_ano.items():
-        media_total_por_ano[ano] = {
-        "media": sum(paginas) / len(paginas),
-        "total": sum(paginas)
-        }
-        total_paginas += sum(paginas)
-    
-    paginas_por_ano_ordenado = dict(sorted(media_total_por_ano.items()))
-    
     avaliacoes = (
         Book.objects
         .values("avaliacao_pessoal")
         .annotate(total=Count("id"))
         .order_by("avaliacao_pessoal")
     )
-    
+    labels = [a["avaliacao_pessoal"] for a in avaliacoes if a["avaliacao_pessoal"]]
+    valores = [a["total"] for a in avaliacoes if a["avaliacao_pessoal"]]
+
     books_by_year = (
         Book.objects.filter(read=True)
         .annotate(year=ExtractYear("date_read"))
@@ -159,15 +183,31 @@ def stats_view(request):
         .annotate(total=Count("id"))
         .order_by("year")
     )
-
     years = [b["year"] for b in books_by_year]
     totals = [b["total"] for b in books_by_year]
 
+    paginas_por_ano = {}
+    livros_lidos = Book.objects.filter(read=True, paginas__isnull=False)
+    for livro in livros_lidos:
+        if livro.date_read:
+            ano = livro.date_read.year
+            paginas_por_ano.setdefault(ano, 0)
+            paginas_por_ano[ano] += livro.paginas or 0
+
+    anos_paginas = sorted(paginas_por_ano.keys())
+    totais_paginas = [paginas_por_ano[ano] for ano in anos_paginas]
     
+    total_paginas = sum(totais_paginas)
     
-    labels = [a["avaliacao_pessoal"] for a in avaliacoes if a["avaliacao_pessoal"]]
-    valores = [a["total"] for a in avaliacoes if a["avaliacao_pessoal"]]
-    
+    livros_por_publicacao = {}
+    for livro in Book.objects.all():
+        if livro.ano_publicacao:
+            livros_por_publicacao.setdefault(livro.ano_publicacao, 0)
+            livros_por_publicacao[livro.ano_publicacao] += 1
+
+    anos_publicacao = sorted(livros_por_publicacao.keys())
+    totais_publicacao = [livros_por_publicacao[ano] for ano in anos_publicacao]
+
     return render(request, "livros/stats.html", {
         "total_livros": total_livros,
         "lidos": lidos,
@@ -179,6 +219,41 @@ def stats_view(request):
         "valores": valores,
         "years": years,
         "totals": totals,
-        "paginas_por_ano": paginas_por_ano_ordenado,
+        "paginas_por_ano": paginas_por_ano,
         "total_paginas": total_paginas,
+        "anos_paginas": anos_paginas,
+        "totais_paginas": totais_paginas,
+        "anos_publicacao": anos_publicacao,
+        "totais_publicacao": totais_publicacao,
     })
+    
+def export_books_excel(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Livros"
+
+    ws.append([
+        "Título", "Autor", "Ano", "Páginas", "Tema",
+        "Preço", "Edição", "Avaliação", "Registado a",
+        "Início Leitura", "Fim Leitura"
+    ])
+
+    for book in Book.objects.all():
+        ws.append([
+            book.title,
+            book.author,
+            book.ano_publicacao,
+            book.paginas,
+            book.tema_principal,
+            book.preco,
+            book.edicao,
+            book.avaliacao_pessoal,
+            book.date_reg.strftime("%d/%m/%Y") if book.date_reg else "",
+            book.date_start.strftime("%d/%m/%Y") if book.date_start else "",
+            book.date_read.strftime("%d/%m/%Y") if book.date_read else "",
+        ])
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename=livros.xlsx'
+    wb.save(response)
+    return response

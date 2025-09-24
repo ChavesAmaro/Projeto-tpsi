@@ -2,20 +2,39 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estatísticas da Biblioteca</title>
+    <title>Estatísticas de Leitura</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- CSS Block -->
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            background: #f6fbffff;
+            padding: 20px;
         }
-
         h1, h2 {
-            margin-bottom: 10px;
+            text-align: center;
         }
-
+        .stats {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .chart-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
         .btn-back {
             background-color: #464646ff;
             color: white;
@@ -25,169 +44,133 @@
             display: inline-block;
             margin-top: 20px;
         }
-
-        .charts-container {
-            display: flex;
-            gap: 40px;
-            margin-top: 20px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-
-        .chart-box {
-            flex: 1;
-            min-width: 300px;
-            text-align: center;
-        }
-
-        .pages-container {
-            display: flex;
-            gap: 40px;
-            margin-top: 30px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-
-        .pages-table-box, .pages-chart-box {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            text-align: center;
-            background: #fdfdfd;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        .stats-table th, .stats-table td {
-            border: 1px solid #ccc;
-            padding: 8px 12px;
-        }
-
-        .stats-table th {
-            background-color: #2b8fd1ff;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        .stats-table tr:nth-child(even) {
-            background-color: #f5f5f5;
-        }
-
-        .stats-table tfoot {
-            font-weight: bold;
-            background-color: #eaeaea;
-        }
-
-        .chart-box h2, .pages-chart-box h2, .pages-table-box h2 {
-            margin: 0 0 10px 0;
-            text-align: left;
-        }
     </style>
 </head>
 <body>
-    <h1>Estatísticas da Biblioteca</h1>
 
-    <p>Total de livros: {{ total_livros }}</p>
-    <p>Livros lidos: {{ lidos }}</p>
-    <p>Livros por ler: {{ nao_lidos }}</p>
-    <p>Média de páginas: {{ media_paginas }}</p>
-    <p>Média da avaliação pessoal: {{ media_avaliacao }}</p>
-    <p>Preço total gasto em livros: {{ preco_total }} €</p>
+    <h1>Estatísticas de Leitura</h1>
+    <!-- Estatísticas Gerais -->
+    <div class="stats">
+        <p><strong>Total de livros:</strong> {{ total_livros }}</p>
+        <p><strong>Lidos:</strong> {{ lidos }} | <strong>Não lidos:</strong> {{ nao_lidos }}</p>
+        <p><strong>Média de páginas por livro:</strong> {{ media_paginas }}</p>
+        <p><strong>Média de avaliação:</strong> {{ media_avaliacao }}</p>
+        <p><strong>Total gasto em livros:</strong> € {{ preco_total }}</p>
+        <p><strong>Total de páginas lidas:</strong> {{ total_paginas }}</p>
+    </div>
+    <!-- Identificação dos Gráficos + ID -->
+    <div class="charts">
 
-    <div class="charts-container">
         <div class="chart-box">
-            <h2>Distribuição das Avaliações Pessoais</h2>
-            <canvas id="avaliacoesChart" width="300" height="300"></canvas>
+            <h2>Distribuição das Avaliações</h2>
+            <canvas id="graficoPizza"></canvas>
         </div>
+
+
         <div class="chart-box">
             <h2>Livros Lidos por Ano</h2>
-            <canvas id="booksPerYearChart" width="400" height="300"></canvas>
+            <canvas id="graficoLivros"></canvas>
+        </div>
+
+
+        <div class="chart-box">
+            <h2>Páginas Lidas por Ano</h2>
+            <canvas id="graficoPaginas"></canvas>
+        </div>
+
+        <div class="chart-box">
+            <h2>Livros Lidos por Ano de Publicação</h2>
+            <canvas id="graficoPublicacao"></canvas>
         </div>
     </div>
-
-    <div class="pages-container">
-        <div class="pages-table-box">
-            <h2>Média de Páginas Lidas por Ano</h2>
-            <table class="stats-table">
-                <thead>
-                    <tr>
-                        <th>Ano</th>
-                        <th>Média de Páginas</th>
-                        <th>Total de Páginas por Ano</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ano, dados in paginas_por_ano.items %}
-                    <tr>
-                        <td>{{ ano }}</td>
-                        <td>{{ dados.media|floatformat:1 }}</td>
-                        <td>{{ dados.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th colspan="2">Soma</th>
-                        <th>{{ total_paginas }}</th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <div class="pages-chart-box">
-            <h2>Evolução de Páginas Lidas por Ano</h2>
-            <canvas id="paginasPorAnoChart" width="500" height="300"></canvas>
-        </div>
-    </div>
-
-    <a href="{% url 'book_list' %}" class="btn-back">Voltar à Lista</a> 
-
+    <!-- Script dos charts (JS/DJANGO) -->
     <script>
-        const ctxAvaliacao = document.getElementById('avaliacoesChart').getContext('2d');
-        new Chart(ctxAvaliacao, {
+        const ctxPizza = document.getElementById('graficoPizza').getContext('2d');
+        new Chart(ctxPizza, {
             type: 'pie',
             data: {
                 labels: {{ labels|safe }},
                 datasets: [{
                     data: {{ valores|safe }},
-                    backgroundColor: ['#000000ff','#001422ff','#003a61ff','#005b97ff','#0099ffff'],
-                    borderWidth: 1
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0', '#9966ff']
                 }]
             },
-            options: { responsive: false, plugins: { legend: { position: 'right' } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
         });
 
-        const ctxBooksYear = document.getElementById('booksPerYearChart').getContext('2d');
-        new Chart(ctxBooksYear, {
+
+        const ctxLivros = document.getElementById('graficoLivros').getContext('2d');
+        new Chart(ctxLivros, {
             type: 'bar',
             data: {
                 labels: {{ years|safe }},
-                datasets: [{ label: 'Livros Lidos', data: {{ totals|safe }}, backgroundColor: '#2b8fd1', borderWidth: 1 }]
-            },
-            options: { responsive: false, scales: { y: { beginAtZero: true } } }
-        });
-
-        const ctxPaginas = document.getElementById('paginasPorAnoChart').getContext('2d');
-        new Chart(ctxPaginas, {
-            type: 'line',
-            data: {
-                labels: [{% for ano, dados in paginas_por_ano.items %}'{{ ano }}',{% endfor %}],
                 datasets: [{
-                    label: 'Total de Páginas Lidas',
-                    data: [{% for ano, dados in paginas_por_ano.items %}{{ dados.total }},{% endfor %}],
-                    borderColor: '#247fe0',
-                    backgroundColor: '#247fe0',
-                    fill: false,
-                    tension: 0.3
+                    label: 'Livros lidos',
+                    data: {{ totals|safe }},
+                    backgroundColor: '#36a2eb'
                 }]
             },
-            options: { responsive: false, scales: { y: { beginAtZero: true } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+
+        const ctxPaginas = document.getElementById('graficoPaginas').getContext('2d');
+        new Chart(document.getElementById('graficoPaginas'), {
+            type: 'bar',
+            data: {
+                labels: {{ anos_paginas|safe }},
+                datasets: [{
+                    label: 'Páginas lidas',
+                    data: {{ totais_paginas|safe }},
+                    backgroundColor: '#ff9f40'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                scales: {
+                    y: { beginAtZero: true } 
+                    } 
+                }
+        });
+
+        new Chart(document.getElementById('graficoPublicacao'), {
+            type: 'bar',
+            data: {
+                labels: {{ anos_publicacao|safe }},
+                datasets: [{
+                    label: 'Livros lidos',
+                    data: {{ totais_publicacao|safe }},
+                    backgroundColor: '#4bc0c0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
         });
     </script>
+    <!-- Botão de retorno -->
+    <a href="{% url 'book_list' %}" class="btn-back">Voltar à Lista</a> 
+
 </body>
 </html>

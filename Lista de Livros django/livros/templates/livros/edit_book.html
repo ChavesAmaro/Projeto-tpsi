@@ -3,32 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSS Block -->
     <style>
-    .btn-back {
-        background-color: #464646ff;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: inline-block;
-        margin-top: 20px;
-    }
-    h3 {
-        margin-top: 20px;
-        margin-bottom: 10px;
-        color: #333;
-    }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6fbffff;
+        }
+        .btn-back {
+            background-color: #464646ff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
 
-    hr {
-        margin: 15px 0;
-        border: none;
-        border-top: 1px solid #ccc;
-    }
+        hr {
+            margin: 15px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
     </style>
 
     <title>Editar Livro</title>
 </head>
 <body>
+<!-- Código para editar livro -->
    <h1>Editar Livro</h1>
 
     <form action="{% url 'edit_book' book.id %}" method="post">
